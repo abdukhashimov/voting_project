@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 55432,
+            "driver": "PostgreSQL",
+            "name": "localhost psql",
+            "group": "mine",
+            "database": "open_budget",
+            "username": "postgres",
+            "password": "postgres"
+        }
+    ]
+}

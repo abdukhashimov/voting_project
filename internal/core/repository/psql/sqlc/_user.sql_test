@@ -1,0 +1,229 @@
+// package sqlc_test
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"testing"
+
+	"github.com/abdukhashimov/go_api/internal/core/repository/psql/sqlc"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestQueries_InsertUser(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		arg sqlc.InsertUserParams
+	}
+
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "Test inserting user",
+			args: args{
+				ctx: context.Background(),
+				arg: sqlc.InsertUserParams{
+					Fullname:    fmt.Sprintf("%s %s", fake.Person().FirstName(), fake.Person().LastName()),
+					PhoneNumber: "998935789768",
+					RegionID:    1,
+					DistrictID:  2,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := queries.InsertUser(tt.args.ctx, tt.args.arg)
+			require.NoError(t, err)
+			require.Greater(t, len(got), int(0))
+
+			err = queries.HardDeleteUser(context.Background(), got)
+			assert.NoError(t, err, "failed to clean inserted user")
+		})
+	}
+}
+
+func TestQueries_GetAllUsers(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		arg sqlc.GetAllUsersParams
+	}
+
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "list all users",
+			args: args{
+				ctx: context.Background(),
+				arg: sqlc.GetAllUsersParams{
+					Limit:  10,
+					Offset: 0,
+				},
+			},
+		},
+		{
+			name: "list all users with region",
+			args: args{
+				ctx: context.Background(),
+				arg: sqlc.GetAllUsersParams{
+					Limit:    10,
+					Offset:   0,
+					RegionID: 1,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dummyUserID, insertErr := queries.InsertUser(tt.args.ctx, sqlc.InsertUserParams{
+				Fullname:    fake.Person().Name(),
+				PhoneNumber: fake.UUID().V4(),
+				RegionID:    1,
+				DistrictID:  1,
+			})
+
+			require.NoError(t, insertErr, "failed to insert dummy user")
+
+			got, err := queries.GetAllUsers(tt.args.ctx, tt.args.arg)
+			assert.NoError(t, err, "failed to retrieve users")
+			assert.Greater(t, len(got), int(0), "users does not exist in database")
+
+			err = queries.HardDeleteUser(tt.args.ctx, dummyUserID)
+			require.NoError(t, err, "failed to delete dummy user")
+		})
+	}
+}
+
+func TestQueries_UpdateUser(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		arg sqlc.UpdateUserParams
+	}
+
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "update only first name",
+			args: args{
+				ctx: context.Background(),
+				arg: sqlc.UpdateUserParams{
+					Fullname: sql.NullString{
+						String: "updated....",
+						Valid:  true,
+					},
+				},
+			},
+		},
+		{
+			name: "update only first name and phone number",
+			args: args{
+				ctx: context.Background(),
+				arg: sqlc.UpdateUserParams{
+					Fullname: sql.NullString{
+						String: "updated....",
+						Valid:  true,
+					},
+					PhoneNumber: sql.NullString{
+						String: "updated....",
+						Valid:  true,
+					},
+				},
+			},
+		},
+		{
+			name: "update only first name and phone number",
+			args: args{
+				ctx: context.Background(),
+				arg: sqlc.UpdateUserParams{
+					Fullname: sql.NullString{
+						String: "updated....",
+						Valid:  true,
+					},
+					PhoneNumber: sql.NullString{
+						String: "updated....",
+						Valid:  true,
+					},
+					RegionID: sql.NullInt32{
+						Int32: 2,
+						Valid: true,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dummyUserID, insertErr := queries.InsertUser(tt.args.ctx, sqlc.InsertUserParams{
+				Fullname:    fake.Person().Name(),
+				PhoneNumber: fake.UUID().V4(),
+				RegionID:    1,
+				DistrictID:  1,
+			})
+
+			require.NoError(t, insertErr, "failed to insert dummy user")
+
+			tt.args.arg.ID = dummyUserID
+			err := queries.UpdateUser(tt.args.ctx, tt.args.arg)
+			assert.NoError(t, err, "failed to update the user")
+
+			dbUser, err := queries.GetSingleUserByID(tt.args.ctx, dummyUserID)
+			require.NoError(t, err, "failed to get user by id")
+
+			assert.Equal(t, dbUser.Fullname, tt.args.arg.Fullname.String)
+
+			err = queries.HardDeleteUser(tt.args.ctx, dummyUserID)
+			require.NoError(t, err, "failed to clean dummy user")
+		})
+	}
+}
+
+func TestQueries_GetSingleUserByID(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		id  string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "get user by id",
+			args: args{
+				ctx: context.Background(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			payload := sqlc.InsertUserParams{
+				Fullname:    fake.Person().Name(),
+				PhoneNumber: fake.UUID().V4(),
+				RegionID:    1,
+				DistrictID:  1,
+			}
+
+			dummyUserID, insertErr := queries.InsertUser(tt.args.ctx, payload)
+			require.NoError(t, insertErr, "failed to insert dummy user")
+
+			tt.args.id = dummyUserID
+
+			got, err := queries.GetSingleUserByID(tt.args.ctx, tt.args.id)
+			assert.NoError(t, err, "failed to get user by id")
+			assert.Equal(t, got.ID, dummyUserID)
+			assert.Equal(t, got.Fullname, payload.Fullname)
+
+			err = queries.HardDeleteUser(tt.args.ctx, dummyUserID)
+			require.NoError(t, err, "failed to clean dummy user")
+		})
+	}
+}

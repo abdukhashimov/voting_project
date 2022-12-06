@@ -1,0 +1,8 @@
+version: v1
+breaking:
+  use:
+    - FILE
+  except:
+    - FILE_NO_DELETE
+deps:
+  - buf.build/googleapis/googleapis

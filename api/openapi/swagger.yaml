@@ -1,0 +1,290 @@
+basePath: /v1
+definitions:
+  domain.Board:
+    properties:
+      accept_end_date:
+        type: string
+      accept_start_date:
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      review_end_date:
+        type: string
+      review_start_date:
+        type: string
+      title:
+        type: string
+      total_amount:
+        type: integer
+      voting_end_date:
+        type: string
+      voting_start_date:
+        type: string
+    type: object
+  domain.BoardCreate:
+    properties:
+      accept_end_date:
+        type: string
+      accept_start_date:
+        type: string
+      icon:
+        type: string
+      review_end_date:
+        type: string
+      review_start_date:
+        type: string
+      title:
+        type: string
+      total_amount:
+        type: integer
+      voting_end_date:
+        type: string
+      voting_start_date:
+        type: string
+    type: object
+  domain.ErrorResp:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  domain.SuccessResp:
+    properties:
+      id:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      district_id:
+        type: integer
+      fullname:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      phone_number:
+        type: string
+      region_id:
+        type: integer
+      role:
+        type: string
+      status:
+        type: integer
+      updated_at:
+        type: string
+      username:
+        type: string
+    required:
+    - district_id
+    - fullname
+    - phone_number
+    - region_id
+    type: object
+  domain.UserAllResp:
+    properties:
+      count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/domain.User'
+        type: array
+    type: object
+  domain.UserCreate:
+    properties:
+      district_id:
+        type: integer
+      fullname:
+        type: string
+      phone_number:
+        type: string
+      region_id:
+        type: integer
+    required:
+    - district_id
+    - fullname
+    - phone_number
+    - region_id
+    type: object
+info:
+  contact: {}
+  description: This API contains the source for the Open budget app
+  title: Open budget API
+paths:
+  /boards:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload-body
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/domain.BoardCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.SuccessResp'
+      summary: API to create boards
+      tags:
+      - boards
+  /boards/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: key-id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Board'
+      summary: API to get a single board
+      tags:
+      - boards
+  /users:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: district_id
+        type: integer
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: region_id
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.UserAllResp'
+      summary: API to get list of users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: users-body
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.SuccessResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResp'
+      summary: API to create users
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: key-id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.SuccessResp'
+      summary: API to delete a single user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: key-id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+      summary: API to get a single user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: paylaod
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.SuccessResp'
+      summary: API to update users
+      tags:
+      - users
+securityDefinitions:
+  UsersAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

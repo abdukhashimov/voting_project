@@ -1,0 +1,28 @@
+package sqlc_test
+
+import (
+	"context"
+	"os"
+	"testing"
+
+	"github.com/abdukhashimov/go_api/internal/core/repository/psql/sqlc"
+	"github.com/jackc/pgx/v4"
+	"github.com/jaswdr/faker"
+)
+
+var (
+	fake            faker.Faker
+	GLOBAL_PSQL_URL = "postgres://postgres:postgres@localhost:55432/open_budget"
+	queries         *sqlc.Queries
+)
+
+func TestMain(m *testing.M) {
+	fake = faker.New()
+	db, err := pgx.Connect(context.Background(), GLOBAL_PSQL_URL)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	queries = sqlc.New(db)
+	os.Exit(m.Run())
+}
